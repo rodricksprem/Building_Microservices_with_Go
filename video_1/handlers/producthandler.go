@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"encoding/json"
 	"log"
 	"net/http"
 
@@ -17,10 +16,9 @@ func NewProductHandler(l *log.Logger) *ProductHandler {
 }
 
 func (ph *ProductHandler) ServeHTTP(res http.ResponseWriter, req *http.Request) {
-	products := data.GetProducts()
-	data, err := json.Marshal(products)
+	ps := data.GetProducts()
+	err := ps.ToJSON(res)
 	if err != nil {
 		http.Error(res, "Failed to parse data ", http.StatusInternalServerError)
 	}
-	res.Write(data)
 }
