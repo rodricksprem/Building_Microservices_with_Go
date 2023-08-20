@@ -19,8 +19,10 @@ func main() {
 
 	baseHandler := handlers.NewBaseHandler(l)
 	goodbyeHandler := handlers.NewGoodByeHandler(l)
+	productHandler := handlers.NewProductHandler(l)
 	servermux.Handle("/", baseHandler)
 	servermux.Handle("/goodbye", goodbyeHandler)
+	servermux.Handle("/getproducts", productHandler)
 
 	s := &http.Server{
 		Addr:         ":9090",
