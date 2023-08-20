@@ -24,6 +24,8 @@ func main() {
 	servermux.Handle("/goodbye", goodbyeHandler)
 	servermux.Handle("/getproducts", productHandler)
 
+	servermux.Handle("/addproduct", productHandler)
+
 	s := &http.Server{
 		Addr:         ":9090",
 		Handler:      servermux,
