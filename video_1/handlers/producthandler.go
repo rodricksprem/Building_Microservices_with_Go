@@ -16,6 +16,15 @@ func NewProductHandler(l *log.Logger) *ProductHandler {
 }
 
 func (ph *ProductHandler) ServeHTTP(res http.ResponseWriter, req *http.Request) {
+	if req.Method == http.MethodGet {
+		ph.GetProducts(res, req)
+		return
+	}
+
+	res.WriteHeader(http.StatusMethodNotAllowed)
+}
+
+func (ph *ProductHandler) GetProducts(res http.ResponseWriter, req *http.Request) {
 	ps := data.GetProducts()
 	err := ps.ToJSON(res)
 	if err != nil {
