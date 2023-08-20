@@ -2,9 +2,12 @@
 package main
 
 import (
+	"context"
 	"log"
 	"net/http"
 	"os"
+	"os/signal"
+	"time"
 
 	"example.com/video1/handlers"
 )
@@ -19,5 +22,25 @@ func main() {
 	servermux.Handle("/", baseHandler)
 	servermux.Handle("/goodbye", goodbyeHandler)
 
-	http.ListenAndServe(":9000", servermux)
+	s := &http.Server{
+		Addr:         ":9090",
+		Handler:      servermux,
+		IdleTimeout:  120 * time.Second,
+		ReadTimeout:  1 * time.Second,
+		WriteTimeout: 1 * time.Second,
+	}
+	go func() {
+		err := s.ListenAndServe()
+		if err != nil {
+			l.Fatal(err)
+		}
+	}()
+	signalchannel := make(chan os.Signal)
+	signal.Notify(signalchannel, os.Interrupt)
+	signal.Notify(signalchannel, os.Kill)
+	sig := <-signalchannel
+	l.Println(sig, " signal received and gracefully shuting down the server ... ")
+	tc, _ := context.WithTimeout(context.Background(), 30*time.Second) // wait for graceful shutdown
+	s.Shutdown(tc)
+
 }
