@@ -17,15 +17,11 @@ func main() {
 	l := log.New(os.Stdout, "product-api", log.LstdFlags)
 	servermux := http.NewServeMux()
 
-	baseHandler := handlers.NewBaseHandler(l)
-	goodbyeHandler := handlers.NewGoodByeHandler(l)
 	productHandler := handlers.NewProductHandler(l)
-	servermux.Handle("/", baseHandler)
-	servermux.Handle("/goodbye", goodbyeHandler)
+	servermux.Handle("/", productHandler)
 	servermux.Handle("/getproducts", productHandler)
 
 	servermux.Handle("/addproduct", productHandler)
-
 	s := &http.Server{
 		Addr:         ":9090",
 		Handler:      servermux,
