@@ -10,18 +10,21 @@ import (
 	"time"
 
 	"example.com/video1/handlers"
+	"github.com/gorilla/mux"
 )
 
 func main() {
 
 	l := log.New(os.Stdout, "product-api", log.LstdFlags)
-	servermux := http.NewServeMux()
-
+	servermux := mux.NewRouter()
+	getProductsRouter := servermux.Methods(http.MethodGet).Subrouter()
+	addProductsRouter := servermux.Methods(http.MethodPost).Subrouter()
+	putProductRouter := servermux.Methods(http.MethodPut).Subrouter()
 	productHandler := handlers.NewProductHandler(l)
-	servermux.Handle("/", productHandler)
-	servermux.Handle("/getproducts", productHandler)
+	getProductsRouter.HandleFunc("/getproducts", productHandler.GetProducts)
+	addProductsRouter.HandleFunc("/addproduct", productHandler.AddProduct)
+	putProductRouter.HandleFunc("/updateproduct/{id:[0-9]+}", productHandler.UpdateProducts)
 
-	servermux.Handle("/addproduct", productHandler)
 	s := &http.Server{
 		Addr:         ":9090",
 		Handler:      servermux,
