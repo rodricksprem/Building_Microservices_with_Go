@@ -24,6 +24,8 @@ func main() {
 	getProductsRouter.HandleFunc("/getproducts", productHandler.GetProducts)
 	addProductsRouter.HandleFunc("/addproduct", productHandler.AddProduct)
 	putProductRouter.HandleFunc("/updateproduct/{id:[0-9]+}", productHandler.UpdateProducts)
+	addProductsRouter.Use(productHandler.MiddleWareForPayloadValidation)
+	putProductRouter.Use(productHandler.MiddleWareForPayloadValidation)
 
 	s := &http.Server{
 		Addr:         ":9090",

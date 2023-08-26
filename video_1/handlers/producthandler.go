@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"log"
 	"net/http"
 	"strconv"
@@ -12,6 +13,8 @@ import (
 type ProductHandler struct {
 	l *log.Logger
 }
+
+type KeyProduct struct{}
 
 func NewProductHandler(l *log.Logger) *ProductHandler {
 	return &ProductHandler{l}
@@ -27,12 +30,8 @@ func (ph *ProductHandler) GetProducts(res http.ResponseWriter, req *http.Request
 
 func (ph *ProductHandler) AddProduct(res http.ResponseWriter, req *http.Request) {
 	ph.l.Println("Handle POST Product")
-	prod := &data.Product{}
-	err := prod.FromJSON(req.Body)
-	if err != nil {
-		http.Error(res, "Failed to unmarshal data ", http.StatusBadRequest)
-	}
-	data.AddProducts(prod)
+	prod := req.Context().Value(KeyProduct{}).(data.Product)
+	data.AddProducts(&prod)
 	ph.l.Printf("Prod %#v", prod)
 }
 
@@ -45,15 +44,28 @@ func (ph *ProductHandler) UpdateProducts(res http.ResponseWriter, req *http.Requ
 		http.Error(res, "Failed to convert id into int data ", http.StatusBadRequest)
 	}
 	ph.l.Println(" got id ", id)
-	prod := &data.Product{}
-	errnew := prod.FromJSON(req.Body)
-	if errnew != nil {
-		http.Error(res, "Failed to unmarshal data ", http.StatusBadRequest)
-	}
-	errnew1 := data.UpdateProducts(id, prod)
+	prod := req.Context().Value(KeyProduct{}).(data.Product)
+	errnew1 := data.UpdateProducts(id, &prod)
 	if errnew1 != nil {
 		http.Error(res, "unable to update product", http.StatusNotModified)
 	}
 
 	ph.l.Printf("Prod %#v", prod)
+}
+func (ph *ProductHandler) MiddleWareForPayloadValidation(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
+		ph.l.Println("Handle the middleware ")
+
+		prod := data.Product{}
+		errnew := prod.FromJSON(req.Body)
+		if errnew != nil {
+			http.Error(res, "Failed to unmarshal data ", http.StatusBadRequest)
+		}
+		ctx := context.WithValue(req.Context(), KeyProduct{}, prod)
+
+		r := req.WithContext(ctx)
+		next.ServeHTTP(res, r)
+
+	})
+
 }
