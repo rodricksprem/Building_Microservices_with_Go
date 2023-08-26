@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net/http"
 	"strconv"
@@ -45,6 +46,11 @@ func (ph *ProductHandler) UpdateProducts(res http.ResponseWriter, req *http.Requ
 	}
 	ph.l.Println(" got id ", id)
 	prod := req.Context().Value(KeyProduct{}).(data.Product)
+	errval := prod.Validate()
+	if errval != nil {
+		ph.l.Println("[Error] validating product ", err)
+		http.Error(res, fmt.Sprintf("Data Validation Failed %s", err), http.StatusBadRequest)
+	}
 	errnew1 := data.UpdateProducts(id, &prod)
 	if errnew1 != nil {
 		http.Error(res, "unable to update product", http.StatusNotModified)
@@ -59,8 +65,15 @@ func (ph *ProductHandler) MiddleWareForPayloadValidation(next http.Handler) http
 		prod := data.Product{}
 		errnew := prod.FromJSON(req.Body)
 		if errnew != nil {
+
 			http.Error(res, "Failed to unmarshal data ", http.StatusBadRequest)
 		}
+		err := prod.Validate()
+		if err != nil {
+			ph.l.Println("[Error] validating product ", err)
+			http.Error(res, fmt.Sprintf("Data Validation Failed %s", err), http.StatusBadRequest)
+		}
+
 		ctx := context.WithValue(req.Context(), KeyProduct{}, prod)
 
 		r := req.WithContext(ctx)
